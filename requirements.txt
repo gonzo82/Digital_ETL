@@ -1,0 +1,17 @@
+pandas~=1.1.2
+boto3~=1.15.1
+botocore~=1.18.1
+requests~=2.24.0
+psycopg2-binary~=2.8.6
+numpy~=1.19.2
+hubspot3~=3.2.50
+googleads~=25.0.0
+slack-webhook~=1.0.3
+hubspot-api-client~=3.0.0
+delighted~=4.0.0
+python-helpscout-v2~=2.0.0
+oauthlib~=3.1.0
+pysftp~=0.2.9
+paramiko~=2.7.2
+traceback2~=1.4.0
+python-decouple~=3.4
