@@ -57,7 +57,7 @@ if __name__ == '__main__':
     if len(parameters) > 1:
         getDelighted(parameters[1])
     else:
-        getDelighted(cred.DELIGHTED_API_KEY_NPS)
+        getDelighted(cred.DELIGHTED_API_KEY_CSAT_V2)
 
 
 

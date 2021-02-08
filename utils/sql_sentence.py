@@ -241,6 +241,7 @@ HUBSPOT_USERS_DATA_INCREMENTAL = """
 		cpu.last_deal_date >= date_trunc('hour', getdate() - interval '6 hour')
 		or cpu.last_date_delivered >= date_trunc('hour', getdate() - interval '6 hour')
 		or date_add('seconds', u.date_registered, '1970-01-01') >= date_trunc('hour', getdate() - interval '6 hour')
+		or date_add('seconds', u.last_access , '1970-01-01') >= date_trunc('hour', getdate() - interval '6 hour')
 	)
 """
 		# cpu.last_deal_date >= date_trunc('hour', getdate() - interval '20 day')
@@ -252,6 +253,7 @@ HUBSPOT_USERS_DATA_INCREMENTAL_DAY = """
 		cpu.last_deal_date >= getdate()::date - interval '1 day'
 		or cpu.last_date_delivered >= getdate()::date - interval '1 day'
 		or date_add('seconds', u.date_registered, '1970-01-01')::date >= getdate()::date - interval '1 day'
+		or date_add('seconds', u.last_access , '1970-01-01') >= date_trunc('hour', getdate() - interval '1 day')
 	)
 """
 
@@ -587,7 +589,7 @@ where
 DELIGHTED_SURVEYS = """
 insert into bi_development.delighted_surveys
 select * from bi_development_stg.v_delighted_surveys_stg dss
-where not exists (select * from bi_development.delighted_surveys ds where dss.id = ds.id)
+where not exists (select * from bi_development.delighted_surveys ds where dss.id = ds.id and dss.survey_type = ds.survey_type)
 """
 
 DELIGHTED_PEOPLE = """
