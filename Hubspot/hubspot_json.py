@@ -60,7 +60,8 @@ class JsonHubspot():
                 return finalDataset
             finalDataset = finalDataset.append(self.eventsToDict(datasetEvent))
             continue_while = datasetEvent['hasMore'][0]
-        return finalDataset
+        new_dataset = finalDataset[cred.HUBSPOT_FIEDS]
+        return new_dataset
 
     def getMarketingEmails(self):
         url_event = self.url_base_marketing_emails + '?hapikey=' + self.API_KEY + '&limit=' + str(self.events_limit)

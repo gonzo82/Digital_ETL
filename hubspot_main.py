@@ -61,6 +61,7 @@ def load_hubspot_data():
     for row in campaigns['email_campaign_id']:
         events = json.getCampaignEvents(str(row), str(last_event_num).replace('.0', ''))
         # events = json.getCampaignEvents(str(row), dates.return_miliseconds(1))
+        # print(events)
         all_events = all_events.append(events)
 
     if len(all_events) > 0:

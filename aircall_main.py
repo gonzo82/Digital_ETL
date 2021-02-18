@@ -44,10 +44,10 @@ def generate_period():
     s3_bucket = S3Bucket()
     folder = 'aircall'
     filename = 'aircall_{date}.csv'
-    date_start = datetime.strptime('2020-12-01', '%Y-%m-%d')
-    # date_start = datetime.strptime('2020-10-19', '%Y-%m-%d')
-    # end_date = datetime.strptime('2020-05-01', '%Y-%m-%d')
+    date_start = datetime.strptime('2021-02-01', '%Y-%m-%d')
+    # end_date = datetime.strptime('2021-02-15', '%Y-%m-%d')
     end_date = datetime.now()
+    # REALIZA PROCESAMIENTO DE LAS FECHAS DE 7 EN 7 DÍAS
     while date_start < end_date:
         from_date = dates.return_seconds_from_date(date_start.strftime('%Y-%m-%d'))
         to_date = dates.return_seconds_from_date((date_start + timedelta(days=7)).strftime('%Y-%m-%d'))
@@ -67,4 +67,5 @@ def generate_period():
 if __name__ == '__main__':
     print_message('AIRCALL', 'Starting to load calls into the database')
     generate_last_period()
+    # generate_period()
     print_message('AIRCALL', 'Calls loaded into the database')
