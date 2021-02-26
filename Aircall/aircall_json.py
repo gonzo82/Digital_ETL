@@ -44,7 +44,7 @@ class JsonAircall():
                 if page == 1:
                     rawCalls = pd.DataFrame(calls)
                 else:
-                    rawCalls = rawCalls.append( pd.DataFrame(calls))
+                    rawCalls = rawCalls.append(pd.DataFrame(calls))
                 page = page + 1
                 if num_calls == len(rawCalls):
                     continues = False

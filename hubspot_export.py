@@ -31,6 +31,8 @@ def hubspot_send_date():
             date_filter = 'all'
         elif parameters[1] == 'day':
             date_filter = '1 day'
+        elif parameters[1] == 'month':
+            date_filter = '30 day'
         # else:
         #     if datetime.today().hour == 7:
         #         date_filter = '1 day'
@@ -49,6 +51,10 @@ def hubspot_send_date():
     elif date_filter == '1 day':
         users_sql = sqls.HUBSPOT_USERS_DATA + sqls.HUBSPOT_USERS_DATA_INCREMENTAL_DAY
         carts_sql = sqls.HUBSPOT_CARTS_DATA + sqls.HUBSPOT_CARTS_DATA_INCREMENTAL_DAY
+        carts_abandoned_sql = sqls.HUBSPOT_ABANDONED_DATA
+    elif date_filter == '30 day':
+        users_sql = sqls.HUBSPOT_USERS_DATA + sqls.HUBSPOT_USERS_DATA_30_DAY
+        carts_sql = sqls.HUBSPOT_CARTS_DATA + sqls.HUBSPOT_CARTS_DATA_30_DAY
         carts_abandoned_sql = sqls.HUBSPOT_ABANDONED_DATA
 
     print_message('HUBSPOT', 'The export of the data starts ({date_filter})'.format(date_filter=date_filter))

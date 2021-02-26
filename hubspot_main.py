@@ -11,20 +11,9 @@ import pandas as pd
 def load_hubspot_data():
     filename = "hubspot_campaign.csv"
     filename_all_events = "hubspot_events_all.csv"
-    your_keys = {'ab',
-                 'analyticsPageType',
-                 'created',
-                 'fromName',
-                 'name',
-                 'id'
-                 }
     folder = 'hubspot'
     campaign_stg_table = 'bi_development_stg.hubspot_campaigns_stg'
-    campaign_origin = 'bi_development_stg.v_hubspot_campaigns_stg'
-    campaign_table = 'bi_development.hubspot_campaigns'
     events_stg_table = 'bi_development_stg.hubspot_events_stg'
-    events_origin = 'bi_development_stg.v_hubspot_events_stg'
-    events_table = 'bi_development.hubspot_events'
     processed_files = 'processed_files'
 
     sql_load_campaigns = sqls.HUBSPOT_LOAD_CAMPAIGNS

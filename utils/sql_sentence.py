@@ -191,9 +191,9 @@ select
 	cpu.city,
 	cpu.postal_code,
 	cpu.ors,
-	CONVERT_TIMEZONE ( 'UTC', 'Europe/Madrid', cpu.first_date_delivered)::date as first_order_date,
-	CONVERT_TIMEZONE ( 'UTC', 'Europe/Madrid', cpu.last_date_delivered)::date as last_order_date,
-	CONVERT_TIMEZONE ( 'UTC', 'Europe/Madrid', cpu.last_deal_date)::date as last_deal_date,
+	date_diff('seconds', '1970-01-01', cpu.first_date_delivered::date) * 1000 as first_order_date,
+	date_diff('seconds', '1970-01-01', cpu.last_date_delivered::date) * 1000 as last_order_date,
+	date_diff('seconds', '1970-01-01', cpu.last_deal_date::date) * 1000 as last_deal_date,
 	cpu.price,
 	cpu.discount,
 	cpu.gmv,
@@ -205,7 +205,7 @@ select
 	u.email,
 	u.email_subscribed,
 	u.email_verified,
-	u.date_joined,
+	date_diff('seconds', '1970-01-01', date_add('seconds', u.date_joined, '1970-01-01')::date) * 1000 as date_joined,
 	trim(coalesce(u.name, '') || ' ' || coalesce(u.surname, '')) as full_name,
 	u.locale,
 	coalesce(coupon.pending, 0) as wallet,
@@ -254,6 +254,15 @@ HUBSPOT_USERS_DATA_INCREMENTAL_DAY = """
 		or cpu.last_date_delivered >= getdate()::date - interval '1 day'
 		or date_add('seconds', u.date_registered, '1970-01-01')::date >= getdate()::date - interval '1 day'
 		or date_add('seconds', u.last_access , '1970-01-01') >= date_trunc('hour', getdate() - interval '1 day')
+	)
+"""
+
+HUBSPOT_USERS_DATA_30_DAY = """
+	and (
+		cpu.last_deal_date >= getdate()::date - interval '30 day'
+		or cpu.last_date_delivered >= getdate()::date - interval '30 day'
+		or date_add('seconds', u.date_registered, '1970-01-01')::date >= getdate()::date - interval '30 day'
+		or date_add('seconds', u.last_access , '1970-01-01') >= date_trunc('hour', getdate() - interval '30 day')
 	)
 """
 
@@ -317,9 +326,9 @@ select
 		coalesce(c.total_price_discount, 0) -
 		coalesce(co.delivery_price_discount)
 	as gmv,
-	CONVERT_TIMEZONE ( 'UTC', 'Europe/Madrid', date_add('seconds', c.last_update, '1970-01-01'))::date as last_update,
+	date_diff('seconds', '1970-01-01', date_add('seconds', c.last_update, '1970-01-01')::date) * 1000 as last_update,
 	sb.rating,
-	CONVERT_TIMEZONE ( 'UTC', 'Europe/Madrid', date_add('seconds', c.date_delivered, '1970-01-01'))::date as delivered_date,
+	date_diff('seconds', '1970-01-01', date_add('seconds', c.date_delivered, '1970-01-01')::date) * 1000 as delivered_date,
 	u.email as user_email
 from
 	comprea.cart c
@@ -359,6 +368,13 @@ HUBSPOT_CARTS_DATA_INCREMENTAL_DAY = """
 	and (
 		date_add('seconds', c.last_update, '1970-01-01') >= getdate() - interval '1 day'
 		or date_add('seconds', c.date_delivered, '1970-01-01') >= getdate() - interval '1 day'
+	)
+	"""
+
+HUBSPOT_CARTS_DATA_30_DAY = """
+	and (
+		date_add('seconds', c.last_update, '1970-01-01') >= getdate() - interval '30 day'
+		or date_add('seconds', c.date_delivered, '1970-01-01') >= getdate() - interval '30 day'
 	)
 	"""
 
