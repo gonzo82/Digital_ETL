@@ -43,7 +43,8 @@ def helpscout_load_data():
     print_message('HELPSCOUT', 'Mailboxes data added to database')
 
     # Get the mailboxes
-    conversations = hs.getConversationsLast()
+    days = 4
+    conversations = hs.getConversationsLast(hours=24*days)
     if len(conversations) > 0:
         s3_bucket.save_csv(conversations, conversations_filename, folder)
         ddbb.open_connection()
@@ -55,6 +56,7 @@ def helpscout_load_data():
             delimiter=cred.S3_DELIMITER)
         s3_bucket.move_to_backup('{folder}/{filename}'.format(folder=folder, filename=conversations_filename))
         ddbb.execute_query(sql.HELPSCOUT_DELETE)
+        ddbb.execute_query(sql.HELPSCOUT_CLOSE.format(days=days))
         ddbb.execute_query(sql.HELPSCOUT_INSERT)
         ddbb.execute_query(sql.HELPSCOUT_ACTIVE)
         ddbb.close_connection()

@@ -584,6 +584,16 @@ where
 	exists (select * from bi_development_stg.helpscout_conversations_stg hs_stg where helpscout_conversations.id = hs_stg.id::int)
 """
 
+HELPSCOUT_CLOSE = """
+update
+	bi_development.helpscout_conversations
+set
+	status = 'closed'
+where
+	status ='active'
+	and customer_waiting_since_time >= CURRENT_DATE - INTERVAL '{days} day'
+"""
+
 HELPSCOUT_ACTIVE = """
 insert into bi_development.helpscout_conversations_active
 select
