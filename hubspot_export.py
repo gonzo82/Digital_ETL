@@ -57,6 +57,8 @@ def hubspot_send_date():
         carts_sql = sqls.HUBSPOT_CARTS_DATA + sqls.HUBSPOT_CARTS_DATA_30_DAY
         carts_abandoned_sql = sqls.HUBSPOT_ABANDONED_DATA
 
+    # carts_sql = sqls.HUBSPOT_CARTS_DATA + sqls.HUBSPOT_CARTS_DATA_CUSTOM
+
     print_message('HUBSPOT', 'The export of the data starts ({date_filter})'.format(date_filter=date_filter))
 
     carts_data = redshift.fetch_data(carts_sql)

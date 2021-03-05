@@ -17,13 +17,14 @@ class Delighted:
         try:
             for survey in survey_list:
                 row_filtered = dict()
-                # if survey.id == '152927098':
-                #     print(survey.id)
                 row_filtered['id'] = survey.id
                 row_filtered['person'] = survey.person
                 row_filtered['survey_type'] = survey.survey_type
                 row_filtered['score'] = survey.score
-                row_filtered['comment'] = survey.comment
+                if survey.comment:
+                    row_filtered['comment'] = survey.comment[:499]
+                else:
+                    row_filtered['comment'] = ''
                 row_filtered['permalink'] = survey.permalink
                 row_filtered['created_at'] = survey.created_at
                 row_filtered['updated_at'] = survey.updated_at

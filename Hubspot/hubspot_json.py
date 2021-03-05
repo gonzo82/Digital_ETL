@@ -60,7 +60,13 @@ class JsonHubspot():
                 return finalDataset
             finalDataset = finalDataset.append(self.eventsToDict(datasetEvent))
             continue_while = datasetEvent['hasMore'][0]
-        new_dataset = finalDataset[cred.HUBSPOT_FIEDS]
+        new_dataset = pd.DataFrame(dict())
+        # print(finalDataset)
+        if len(finalDataset) > 0:
+            for field in cred.HUBSPOT_FIEDS:
+                # print(finalDataset[field])
+                new_dataset[field] = finalDataset[field]
+        # print(new_dataset)
         return new_dataset
 
     def getMarketingEmails(self):

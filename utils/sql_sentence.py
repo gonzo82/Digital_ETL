@@ -378,6 +378,13 @@ HUBSPOT_CARTS_DATA_30_DAY = """
 	)
 	"""
 
+HUBSPOT_CARTS_DATA_CUSTOM = """
+	and (
+		date_add('seconds', c.last_update, '1970-01-01') >= '2021-02-26'
+		or date_add('seconds', c.date_delivered, '1970-01-01') >= '2021-02-26'
+	)
+	"""
+
 HUBSPOT_ABANDONED_DATA = """
 with
 products as (
