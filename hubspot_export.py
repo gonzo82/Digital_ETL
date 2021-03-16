@@ -57,7 +57,7 @@ def hubspot_send_date():
         carts_sql = sqls.HUBSPOT_CARTS_DATA + sqls.HUBSPOT_CARTS_DATA_30_DAY
         carts_abandoned_sql = sqls.HUBSPOT_ABANDONED_DATA
 
-    # carts_sql = sqls.HUBSPOT_CARTS_DATA + sqls.HUBSPOT_CARTS_DATA_CUSTOM
+    # users_sql = sqls.HUBSPOT_USERS_DATA
 
     print_message('HUBSPOT', 'The export of the data starts ({date_filter})'.format(date_filter=date_filter))
 
@@ -68,6 +68,7 @@ def hubspot_send_date():
     carts_abandoned_data = redshift.fetch_data(carts_abandoned_sql)
     sftp.send_file_df(df=carts_abandoned_data, file_name=file_name_abandoned, directory=directory, delimiter=hubspot_delimiter)
     print_message('HUBSPOT', 'Abandoned carts data exported')
+
 
     users_data = redshift.fetch_data(users_sql)
     sftp.send_file_df(df=users_data, file_name=file_name_users, directory=directory, delimiter=hubspot_delimiter)
