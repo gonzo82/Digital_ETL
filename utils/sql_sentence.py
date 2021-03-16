@@ -69,23 +69,20 @@ reschedules as (
 		st.start_datetime <> st_new.start_datetime
 	group by 1
 ),
-carts as (
+carts_pre as (
 	select
 		co.user_id,
 		rank() over (partition by co.user_id order by c.status = 'delivered' desc, coalesce(st.start_datetime, 0) desc, c.date_delivered desc, c.last_update desc, c.id desc) as ranking_last_or,
 		rank() over (partition by co.user_id order by c.expected_delivering_time desc, c.last_update desc, c.id desc) as ranking_last_or_all,
-		p.city,
-		case when c.status = 'delivered' then 1 else 0 end as ors,
+		coalesce(oa.name, oau.name) as city,
 		case
-			when coalesce(p.country, ccountry.country, '') = 'Romania' then right((1000000 + p.value::int)::varchar, 6)
-			when coalesce(p.country, ccountry.country, '') <> 'España' and coalesce(p.country, ccountry.country, '') <> 'Spain' then p.value
-			when p.value = '' then null
-			when REGEXP_COUNT(p.value, '[0-9][0-9][0-9][0-9]') = 0 then null
-			when REGEXP_COUNT(lower(p.value), '[a-z]') > 0 then null
-			when p.value::int < 1000 then null
-			when p.value::int > 99999 then null
-			else right((100000 + p.value::int)::varchar, 5)
-		end as postal_code,
+			when coalesce(oa.name, oau.name) = 'ES' then 'Spain'
+			when coalesce(oa.name, oau.name) = 'RO' then 'Romani'
+			when coalesce(oa.name, oau.name) = 'HU' then 'Hungary'
+			else coalesce(p.country, ccountry.country, '')
+		end as country,
+		case when c.status = 'delivered' then 1 else 0 end as ors,
+		coalesce(p.value, pu.value) as postal_code,
 		c.date_delivered,
 		c.last_update,
 		case
@@ -116,6 +113,12 @@ carts as (
 		comprea.cart c
 			inner join
 		comprea.cash_order co on c.cash_order_id = co.id
+			inner join
+		comprea.user u on co.user_id = u.id
+			left join
+		comprea.postalcode pu on u.postalcode_id = pu.id
+			left join
+		comprea.operational_area oau on pu.operational_area_id = oau.id
 			left join
 		comprea.shopper_timeslot st on c.shopper_timeslot_id = st.id
 			left join
@@ -124,6 +127,8 @@ carts as (
 		comprea.address a on c.address_id = a.id
 			left join
 		comprea.postalcode p on a.postalcode_id = p.id
+			left join
+		comprea.operational_area oa on p.operational_area_id = oa.id
 			left join
 		city_country ccountry on p.city = ccountry.city
 			left join
@@ -138,8 +143,43 @@ carts as (
 		product_incidences pi on c.id = pi.cart_id
 			left join
 		reschedules res on c.id = res.cart_id
-	where
-		c.status <> 'deleted'
+	where c.status <> 'deleted'
+),
+carts as (
+	select
+		user_id,
+		ranking_last_or,
+		ranking_last_or_all,
+		case when city = 'Cluj' then 'Bucharest' else city end as city,
+		ors,
+		case
+			when coalesce(country, '') = 'Romania' then right((1000000 + postal_code::int)::varchar, 6)
+			when coalesce(country, '') <> 'España' and coalesce(country, '') <> 'Spain' then postal_code
+			when postal_code = '' then null
+			when REGEXP_COUNT(postal_code, '[0-9][0-9][0-9][0-9]') = 0 then null
+			when REGEXP_COUNT(lower(postal_code), '[a-z]') > 0 then null
+			when postal_code::int < 1000 then null
+			when postal_code::int > 99999 then null
+			else right((100000 + postal_code::int)::varchar, 5)
+		end as postal_code,
+		date_delivered,
+		last_update,
+		price,
+		discount,
+		device_method,
+		coupon_code,
+		status,
+		rating,
+		company_id,
+		company_name,
+		express,
+		otd,
+		has_incidence,
+		has_other_incidence,
+		has_product_incidence,
+		has_reschedules
+	from
+		carts_pre
 ),
 carts_per_user as (
 	select
