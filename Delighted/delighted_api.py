@@ -1,6 +1,6 @@
 import delighted
-from utils import credentials as cred
 import pandas as pd
+import sys
 
 
 class Delighted:
@@ -83,7 +83,10 @@ class Delighted:
         finalDataset = pd.DataFrame(dict())
 
         while seguir:
-            surveys = delighted.SurveyResponse.all(per_page=self.surveys_per_page, page=pagina)
+            try:
+                surveys = delighted.SurveyResponse.all(per_page=self.surveys_per_page, page=pagina)
+            except:
+                pass
             if len(surveys) == 0:
                 seguir = False
             else:
@@ -110,5 +113,7 @@ class Delighted:
                 rows[index] = row_filtered
                 index += 1
         except KeyError as e:
+            pass
+        except delighted.errors.GeneralAPIError as e:
             pass
         return pd.DataFrame(rows).transpose()
