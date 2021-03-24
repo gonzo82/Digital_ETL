@@ -1,6 +1,6 @@
 from Digital import digital_adwords, digital_facebook, digital_google_analytics, digital_firebase
 from utils.s3_boto3 import S3Bucket
-from utils.slack import print_message, error_log
+from utils.slack import slack_message, error_log
 
 
 @error_log
@@ -35,6 +35,7 @@ def digital_load_data():
     file_types = ['adwords', 'facebook', 'firebase', 'GoogleAnalytics']
 
     digital_google_analytics.truntcate_stg_table()
+    digital_firebase.change_files()
 
     for file_type in file_types:
         file_list = s3.list_folders(file_type)
@@ -46,7 +47,7 @@ def digital_load_data():
                 files = files + 1
         if files > 0:
             process_file(file_type)
-            print_message('DIGITAL', 'Files from {file_type} has been processed'.format(file_type=file_type))
+            slack_message('DIGITAL', 'Files from {file_type} has been processed'.format(file_type=file_type))
 
 
 if __name__ == '__main__':

@@ -83,6 +83,7 @@ class Delighted:
         finalDataset = pd.DataFrame(dict())
 
         while seguir:
+            surveys = []
             try:
                 surveys = delighted.SurveyResponse.all(per_page=self.surveys_per_page, page=pagina)
             except:

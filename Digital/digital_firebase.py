@@ -1,5 +1,7 @@
-
 from utils.redshift import Redshift
+from utils.s3_boto3 import S3Bucket
+import os
+
 
 def process_file(filename):
     ddbb = Redshift()
@@ -24,6 +26,7 @@ def process_file(filename):
                                      delimiter=',')
     ddbb.close_connection()
 
+
 def process_stg_table():
     ddbb = Redshift()
     ddbb.open_connection()
@@ -37,3 +40,43 @@ def process_stg_table():
                                                destiny_table_name='bi_development.firebase_purchase',
                                                date_field='event_date')
     ddbb.close_connection()
+
+
+def change_files():
+    s3 = S3Bucket()
+    # firebase_files = 'firebase'
+    firebase_files = 'firebase'
+    tmp_filename = 'tmp_file.csv'
+    file_list = s3.list_folders(firebase_files)
+    for file in file_list:
+        local_filename = file.split('/')[1]
+        s3.download_file(s3_file_name=file, target_filename=tmp_filename)
+        tmp_file = open(tmp_filename, 'r')
+        start_file = 0
+        inicio = 0
+        inicios = 0
+        cabeceras = 0
+        first_date = ''
+        for line in tmp_file.readlines():
+            if line.rstrip('\n').startswith('# Fecha de inicio'):
+                inicios = inicios + 1
+                if not first_date:
+                    first_date = line.rstrip('\n').replace('# Fecha de inicio: ', '')
+                    first_date = first_date[0:4] + '-' + first_date[4:6] + '-' + first_date[6:8]
+        tmp_file.close()
+
+        if inicios > 0:
+            tmp_file = open(tmp_filename, 'r')
+            local_file = open(local_filename, 'w')
+            for line in tmp_file.readlines():
+                if line.rstrip('\n').startswith('# Fecha de inicio'):
+                    inicio = inicio + 1
+                if inicios == inicio:
+                    cabeceras = cabeceras + 1
+                    if cabeceras >= 3:
+                        local_file.writelines(line.rstrip('\n') + ',' + first_date + '\n')
+            local_file.close()
+            tmp_file.close()
+            s3.upload_file(s3_file_name=local_filename, s3_folder='firebase', local_file_name=local_filename)
+            os.remove(tmp_filename)
+            os.remove(local_filename)

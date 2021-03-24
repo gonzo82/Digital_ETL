@@ -54,10 +54,19 @@ class S3Bucket:
             config=self.my_config
         )
 
-    def only_save_csv(self, df: pd.DataFrame, file_name):
+    def only_local_save_csv(self, df: pd.DataFrame, file_name):
         # save csv to local file
         local_file_name = os.path.join(file_name)
         df.to_csv(local_file_name, index=False, sep='\t', encoding='utf-8')
+        return 1
+
+    def upload_file(self, s3_file_name: str, s3_folder: str, local_file_name: str):
+        try:
+            response = self.s3_client.upload_file(
+                local_file_name, self.S3_BUCKET_NAME, s3_folder + '/' + s3_file_name
+            )
+        except ClientError as e:
+            return 0
         return 1
 
     def save_csv(self, df: pd.DataFrame, s3_file_name: str, s3_folder):
@@ -66,12 +75,10 @@ class S3Bucket:
         df.to_csv(local_file_name, index=False, sep=self.S3_DELIMITER, encoding='utf-8')
 
         # upload the file to s3
-        try:
-            response = self.s3_client.upload_file(
-                local_file_name, self.S3_BUCKET_NAME, s3_folder + '/' + s3_file_name
-            )
-        except ClientError as e:
+        salida = self.upload_file(s3_file_name=s3_file_name, s3_folder=s3_folder, local_file_name=local_file_name)
+        if salida == 0:
             return 0
+
         os.remove(local_file_name)
         return 1
 
@@ -106,3 +113,12 @@ class S3Bucket:
             fecha=fecha,
             extension=filename[-3:]
         )
+
+    def download_file(self, s3_file_name: str, target_filename: str):
+        # download the file from s3
+        try:
+            with open(target_filename, 'wb') as f:
+                self.s3_client.download_fileobj(self.S3_BUCKET_NAME, s3_file_name, f)
+        except ClientError as e:
+            return 0
+        return 1

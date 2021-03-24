@@ -69,6 +69,67 @@ reschedules as (
 		st.start_datetime <> st_new.start_datetime
 	group by 1
 ),
+mgm as (
+	select
+		coupon.user_id,
+		date_add('seconds', max(c.date_delivered), '1970-01-01')::date as dt_mgm
+	from
+		comprea.cart c
+			inner join
+		comprea.cash_order co on c.cash_order_id = co.id
+			inner join
+		comprea.cart_coupon cc on c.id = cc.cart_id
+			inner join
+		comprea.coupon coupon on cc.coupon_id = coupon.id
+			inner join
+		comprea.user u on coupon.user_id = u.id
+	where
+		c.status = 'delivered'
+		and coupon.type = 'person'
+		and co.user_id <> coupon.user_id
+		and c.date_delivered is not null
+		and c.date_delivered >= date_diff('seconds', '1970-01-01', CURRENT_DATE - interval '1 week')
+	group by 1
+),
+ratings as (
+	select
+		co.user_id,
+		sb.rating,
+		sb.date,
+		rank() over (partition by co.user_id order by sb.date desc, sb.id desc) as ranking
+	from
+		comprea.shopper_bill sb
+			inner join
+		comprea.cart c on sb.cart_id = c.id
+			inner join
+		comprea.cash_order co on c.cash_order_id = co.id
+	where
+		sb.rating is not null
+),
+available_postal_code as (
+	select
+		distinct p.value as postal_code
+	from
+		comprea.shop_postalcode sp
+			inner join
+		comprea.postalcode p on sp.postalcode_id = p.id
+			inner join
+		comprea.shop s on sp.shop_id = s.id and s.is_active =1
+),
+ratings_5 as (
+	select
+		user_id,
+		date_add('seconds', max(ratings.date), '1970-01-01')::date as last_rating
+	from
+		ratings
+	group by 1
+	having
+		max(case when ranking = 1 then rating else 0 end) = 5
+		and max(case when ranking = 1 then rating else 0 end) = 5
+		and max(case when ranking = 1 then rating else 0 end) = 5
+		and max(case when ranking = 1 then rating else 0 end) = 5
+		and max(case when ranking = 1 then rating else 0 end) = 5
+),
 carts_pre as (
 	select
 		co.user_id,
@@ -184,7 +245,7 @@ carts as (
 carts_per_user as (
 	select
 		c.user_id,
-		max(case when c.ranking_last_or = 1 then c.postal_code end) is not null as service_available,
+		max(apc.postal_code) is not null as service_available,
 		max(case when c.ranking_last_or = 1 then c.city end) as city,
 		max(case when c.ranking_last_or = 1 then c.postal_code end) as postal_code,
 		sum(c.ors) as ors,
@@ -223,6 +284,8 @@ carts_per_user as (
 			) = 1 as last_order_incidence
 	from
 		carts c
+			left join
+		available_postal_code apc on c.postal_code = apc.postal_code
 	group by 1
 )
 select
@@ -261,18 +324,26 @@ select
 	cpu.express,
 	cpu.last_not_otd,
 	cpu.last_canceled,
-	cpu.last_order_incidence
+	cpu.last_order_incidence,
+	date_diff('seconds', '1970-01-01', mgm.dt_mgm) * 1000 as date_mgm,
+	ratings_5.user_id is not null as last_rating_5,
+	date_diff('seconds', '1970-01-01', ratings_5.last_rating) * 1000 as date_last_rating
 from
 	comprea.user u
 		left join
 	carts_per_user cpu on u.id = cpu.user_id
 		left join
 	comprea.coupon on cpu.user_id = coupon.user_id and coupon.type = 'person'
+		left join
+	mgm on u.id = mgm.user_id
+		left join
+	ratings_5 on u.id = ratings_5.user_id
 where
 	coalesce(u.email, u.phone) is not null
 	and (
 		cpu.last_deal_date >= '2017-01-01'
 		or date_add('seconds', u.date_registered, '1970-01-01')::date >= '2017-01-01'
+		or mgm.dt_mgm is not null
 	)
 """
 
@@ -282,6 +353,7 @@ HUBSPOT_USERS_DATA_INCREMENTAL = """
 		or cpu.last_date_delivered >= date_trunc('hour', getdate() - interval '6 hour')
 		or date_add('seconds', u.date_registered, '1970-01-01') >= date_trunc('hour', getdate() - interval '6 hour')
 		or date_add('seconds', u.last_access , '1970-01-01') >= date_trunc('hour', getdate() - interval '6 hour')
+		or mgm.dt_mgm >= date_trunc('hour', getdate() - interval '6 hour')
 	)
 """
 		# cpu.last_deal_date >= date_trunc('hour', getdate() - interval '20 day')
@@ -294,6 +366,7 @@ HUBSPOT_USERS_DATA_INCREMENTAL_DAY = """
 		or cpu.last_date_delivered >= getdate()::date - interval '1 day'
 		or date_add('seconds', u.date_registered, '1970-01-01')::date >= getdate()::date - interval '1 day'
 		or date_add('seconds', u.last_access , '1970-01-01') >= date_trunc('hour', getdate() - interval '1 day')
+		or mgm.dt_mgm >= date_trunc('hour', getdate() - interval '1 day')
 	)
 """
 
@@ -303,6 +376,7 @@ HUBSPOT_USERS_DATA_30_DAY = """
 		or cpu.last_date_delivered >= getdate()::date - interval '30 day'
 		or date_add('seconds', u.date_registered, '1970-01-01')::date >= getdate()::date - interval '30 day'
 		or date_add('seconds', u.last_access , '1970-01-01') >= date_trunc('hour', getdate() - interval '30 day')
+		or mgm.dt_mgm >= date_trunc('hour', getdate() - interval '30 day')
 	)
 """
 
