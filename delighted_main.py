@@ -36,6 +36,8 @@ def getDelighted(api_key):
                                  table_name=surveys_table_stg,
                                  ignore_header=1,
                                  delimiter=cred.S3_DELIMITER)
+    ddbb.execute_query(sql.DELIGHTED_SURVEYS_CHANGES)
+    ddbb.execute_query(sql.DELIGHTED_SURVEYS_DELETE)
     ddbb.execute_query(sql.DELIGHTED_SURVEYS)
     s3_bucket.move_to_backup('{folder}/{filename}'.format(folder=folder, filename=surveys_filename))
     print_message('DELIGHTED', 'Surveys data added to database')

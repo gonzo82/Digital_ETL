@@ -340,11 +340,13 @@ from
 	ratings_5 on u.id = ratings_5.user_id
 where
 	coalesce(u.email, u.phone) is not null
+	/*
 	and (
 		cpu.last_deal_date >= '2017-01-01'
 		or date_add('seconds', u.date_registered, '1970-01-01')::date >= '2017-01-01'
 		or mgm.dt_mgm is not null
 	)
+	*/
 """
 
 HUBSPOT_USERS_DATA_INCREMENTAL = """
@@ -732,6 +734,44 @@ where
 					)
 """
 
+DELIGHTED_SURVEYS_CHANGES = """
+insert into bi_development.delighted_surveys_changes
+select
+	ds.id,
+	ds.score as score_old,
+	dss.score as score_new,
+	ds.comment as comment_old,
+	dss.comment as comment_new,
+	ds.additional_answers_question as additional_answers_question_old,
+	dss.additional_answers_question as additional_answers_question_new,
+	ds.additional_answers_text as additional_answers_text_old,
+	dss.additional_answers_text as additional_answers_text_new,
+	ds.updated_at as updated_at_old,
+	dss.updated_at as updated_at_new
+from
+	bi_development.delighted_surveys ds
+		inner join
+	bi_development_stg.v_delighted_surveys_stg dss
+		on
+			ds.id = dss.id
+			and ds.survey_type = dss.survey_type
+where
+	ds.updated_at <> dss.updated_at
+"""
+
+DELIGHTED_SURVEYS_DELETE = """
+delete
+from
+	bi_development.delighted_surveys
+where
+	exists(select *
+			from bi_development_stg.v_delighted_surveys_stg dss
+			where
+				dss.id = delighted_surveys.id
+				and dss.survey_type = delighted_surveys.survey_type
+				and dss.updated_at <> delighted_surveys.updated_at
+		)
+"""
 
 DELIGHTED_SURVEYS = """
 insert into bi_development.delighted_surveys
